@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Sales Performance Analytics Dashboard</title>
+    <meta name="description" content="Interactive Business Sales Performance Analytics Dashboard. Analyze revenues, profitability, regional breakdowns, and sub-category sales metrics in real-time with customizable filters.">
+    <meta name="keywords" content="Sales Dashboard, Business Analytics, Revenue Tracking, Profitability Analysis, Retail Sales Reports">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* CSS variables for Theme Control */
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(22, 28, 45, 0.45);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --input-bg: #111827;
+            --table-hover: rgba(255, 255, 255, 0.03);
+            --badge-bg: rgba(59, 130, 246, 0.1);
+            --badge-text: #60a5fa;
+            --radial-1: rgba(59, 130, 246, 0.1);
+            --radial-2: rgba(139, 92, 246, 0.08);
+            --radial-3: rgba(236, 72, 153, 0.05);
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            
+            --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            --success-gradient: linear-gradient(135deg, #10b981 0%, #047857 100%);
+            --accent-gradient: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+            --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+            --neon-blue: #3b82f6;
+            --neon-green: #10b981;
+            --neon-purple: #8b5cf6;
+            --neon-pink: #ec4899;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --card-border: rgba(15, 23, 42, 0.08);
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --input-bg: #ffffff;
+            --table-hover: rgba(0, 0, 0, 0.02);
+            --badge-bg: rgba(59, 130, 246, 0.08);
+            --badge-text: #2563eb;
+            --radial-1: rgba(59, 130, 246, 0.05);
+            --radial-2: rgba(139, 92, 246, 0.04);
+            --radial-3: rgba(236, 72, 153, 0.03);
+            --card-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 10% 20%, var(--radial-1) 0px, transparent 50%),
+                radial-gradient(at 90% 10%, var(--radial-2) 0px, transparent 50%),
+                radial-gradient(at 50% 80%, var(--radial-3) 0px, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+            overflow-x: hidden;
+        }
+
+        /* Container Layout */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Header Styling */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            flex-wrap: wrap;
+            gap: 20px;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .header-title h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-title p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Filter Section */
+        .filters-container {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .filter-group label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .filter-select {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--card-border);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-action-container {
+            display: flex;
+            gap: 8px;
+            align-self: flex-end;
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(236, 72, 153, 0.2) 100%);
+            color: #f472b6;
+            border: 1px solid rgba(236, 72, 153, 0.3);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 38px;
+            transition: all 0.2s;
+        }
+
+        .btn-reset:hover {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(236, 72, 153, 0.3) 100%);
+            box-shadow: 0 0 12px rgba(236, 72, 153, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-theme {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.2) 100%);
+            color: var(--neon-blue);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 38px;
+            transition: all 0.2s;
+        }
+
+        .btn-theme:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.3) 100%);
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* KPI Cards Grid */
+        .kpis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            animation: fadeIn 0.5s ease-out both;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .kpi-card.sales::before { background: var(--primary-gradient); }
+        .kpi-card.profit::before { background: var(--success-gradient); }
+        .kpi-card.margin::before { background: var(--accent-gradient); }
+        .kpi-card.orders::before { background: var(--warning-gradient); }
+
+        .kpi-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .kpi-trend {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .trend-up { color: #10b981; }
+        .trend-down { color: #ef4444; }
+
+        /* Charts Layout */
+        .charts-grid-main {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .charts-grid-secondary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid-main, .charts-grid-secondary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            min-height: 400px;
+            animation: fadeIn 0.6s ease-out both;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .chart-body {
+            position: relative;
+            width: 100%;
+            height: 320px;
+        }
+
+        /* Sub-Category Table Styling */
+        .table-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 24px;
+            animation: fadeIn 0.7s ease-out both;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .table-search-input {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--card-border);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            width: 250px;
+            transition: all 0.2s;
+        }
+
+        .table-search-input:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            padding: 14px 16px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-bottom: 1px solid var(--card-border);
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s;
+        }
+
+        th:hover {
+            color: var(--text-primary);
+        }
+
+        th.sorted {
+            color: var(--neon-blue);
+        }
+
+        th .sort-icon {
+            font-size: 11px;
+            margin-left: 4px;
+            opacity: 0.7;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-primary);
+            transition: background-color 0.2s;
+        }
+
+        tr:hover td {
+            background-color: var(--table-hover);
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .subcat-badge {
+            background: var(--badge-bg);
+            color: var(--badge-text);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Animations */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .kpi-card:nth-child(1) { animation-delay: 0.05s; }
+        .kpi-card:nth-child(2) { animation-delay: 0.1s; }
+        .kpi-card:nth-child(3) { animation-delay: 0.15s; }
+        .kpi-card:nth-child(4) { animation-delay: 0.2s; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Dashboard Header -->
+        <header>
+            <div class="header-title">
+                <h1>Business Sales Performance Analytics</h1>
+                <p>Interactive Revenue, Profitability, and Trend Analysis</p>
+            </div>
+            
+            <div class="filters-container">
+                <!-- Date Filter -->
+                <div class="filter-group">
+                    <label for="filter-year">Year</label>
+                    <select id="filter-year" class="filter-select" onchange="applyFilters()">
+                        <option value="All">All Years</option>
+                        <option value="2022">2022</option>
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                    </select>
+                </div>
+                
+                <!-- Region Filter -->
+                <div class="filter-group">
+                    <label for="filter-region">Region</label>
+                    <select id="filter-region" class="filter-select" onchange="applyFilters()">
+                        <option value="All">All Regions</option>
+                        <option value="East">East</option>
+                        <option value="West">West</option>
+                        <option value="Central">Central</option>
+                        <option value="South">South</option>
+                    </select>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="filter-group">
+                    <label for="filter-category">Category</label>
+                    <select id="filter-category" class="filter-select" onchange="applyFilters()">
+                        <option value="All">All Categories</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Office Supplies">Office Supplies</option>
+                    </select>
+                </div>
+
+                <!-- Customer Segment Filter -->
+                <div class="filter-group">
+                    <label for="filter-segment">Segment</label>
+                    <select id="filter-segment" class="filter-select" onchange="applyFilters()">
+                        <option value="All">All Segments</option>
+                        <option value="Consumer">Consumer</option>
+                        <option value="Corporate">Corporate</option>
+                        <option value="Home Office">Home Office</option>
+                    </select>
+                </div>
+
+                <div class="btn-action-container">
+                    <!-- Reset Button -->
+                    <button class="btn-reset" id="reset-filters-btn" onclick="resetFilters()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        Reset
+                    </button>
+
+                    <!-- Theme Toggle Button -->
+                    <button class="btn-theme" id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Theme">
+                        <svg class="sun-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                        <svg class="moon-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                        <span id="theme-text">Light</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- KPI Summary Cards -->
+            <div class="kpis-grid">
+                <!-- Total Revenue -->
+                <div class="kpi-card sales">
+                    <div class="kpi-label">Total Revenue</div>
+                    <div class="kpi-value" id="kpi-sales">₹0.00</div>
+                    <div class="kpi-trend trend-up">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        <span>Target Exceeded</span>
+                    </div>
+                </div>
+                
+                <!-- Total Profit -->
+                <div class="kpi-card profit">
+                    <div class="kpi-label">Total Profit</div>
+                    <div class="kpi-value" id="kpi-profit">₹0.00</div>
+                    <div class="kpi-trend trend-up">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        <span>Strong Performance</span>
+                    </div>
+                </div>
+
+                <!-- Net Margin -->
+                <div class="kpi-card margin">
+                    <div class="kpi-label">Profit Margin</div>
+                    <div class="kpi-value" id="kpi-margin">0.00%</div>
+                    <div class="kpi-trend trend-up">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        <span>Net Profitability</span>
+                    </div>
+                </div>
+
+                <!-- Total Orders -->
+                <div class="kpi-card orders">
+                    <div class="kpi-label">Total Orders</div>
+                    <div class="kpi-value" id="kpi-orders">0</div>
+                    <div class="kpi-trend trend-up" id="kpi-aov">
+                        <span>AOV: ₹0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Primary Charts Grid -->
+            <div class="charts-grid-main">
+                <!-- Monthly Trends -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Monthly Revenue & Profit Trends</h2>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="chart-trends"></canvas>
+                    </div>
+                </div>
+
+                <!-- Regional breakdown -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Sales by Region</h2>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="chart-region"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secondary Charts Grid -->
+            <div class="charts-grid-secondary">
+                <!-- Sales & Profit by Category -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Sales & Profit by Category</h2>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="chart-category"></canvas>
+                    </div>
+                </div>
+
+                <!-- Top 10 Products -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Top 10 Products by Sales</h2>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="chart-products"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sub-Category Performance Table Breakdown -->
+            <div class="table-card">
+                <div class="table-header">
+                    <h2 class="table-title">Sub-Category Performance Breakdown</h2>
+                    <div class="table-controls">
+                        <input type="text" id="table-search" class="table-search-input" placeholder="Search categories or sub-categories..." oninput="filterTable()">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table id="subcategory-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable(0)">Category <span class="sort-icon" id="sort-icon-0">↕</span></th>
+                                <th onclick="sortTable(1)">Sub-Category <span class="sort-icon" id="sort-icon-1">↕</span></th>
+                                <th onclick="sortTable(2)" class="text-right">Sales Revenue <span class="sort-icon" id="sort-icon-2">↕</span></th>
+                                <th onclick="sortTable(3)" class="text-right">Quantity Sold <span class="sort-icon" id="sort-icon-3">↕</span></th>
+                                <th onclick="sortTable(4)" class="text-right">Profit <span class="sort-icon" id="sort-icon-4">↕</span></th>
+                                <th onclick="sortTable(5)" class="text-right">Profit Margin <span class="sort-icon" id="sort-icon-5">↕</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="subcategory-table-body">
+                            <!-- Dynamically Generated Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Data script load -->
+    <script src="data.js"></script>
+    <script>
+        // Global variables for chart objects
+        let trendChartObj = null;
+        let regionChartObj = null;
+        let categoryChartObj = null;
+        let productsChartObj = null;
+
+        // Global variable for table sorting/filtering
+        window.currentTableData = [];
+        let currentSortCol = -1;
+        let currentSortDir = 'desc';
+
+        // Get Theme Colors for Chart.js Styling
+        function getThemeColors() {
+            const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+            return {
+                text: isLight ? '#64748b' : '#9ca3af',
+                grid: isLight ? 'rgba(15, 23, 42, 0.06)' : 'rgba(255, 255, 255, 0.05)',
+                tooltipBg: isLight ? 'rgba(15, 23, 42, 0.9)' : 'rgba(22, 28, 45, 0.95)',
+                tooltipBorder: isLight ? 'rgba(15, 23, 42, 0.1)' : 'rgba(255, 255, 255, 0.1)'
+            };
+        }
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            // Apply saved theme or default to dark
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+
+            if (typeof salesData === 'undefined') {
+                alert("Sales data file 'data.js' not found. Please run scripts/prepare_data.py and scripts/export_js_data.py to generate it.");
+                return;
+            }
+            applyFilters();
+        });
+
+        // Theme Toggle Functionality
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', nextTheme);
+            localStorage.setItem('theme', nextTheme);
+            
+            updateThemeButton(nextTheme);
+            
+            // Redraw charts with new theme colors
+            applyFilters();
+        }
+
+        function updateThemeButton(theme) {
+            const sunIcon = document.querySelector('.sun-icon');
+            const moonIcon = document.querySelector('.moon-icon');
+            const themeText = document.getElementById('theme-text');
+            
+            if (theme === 'light') {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'inline-block';
+                themeText.innerText = 'Dark';
+            } else {
+                sunIcon.style.display = 'inline-block';
+                moonIcon.style.display = 'none';
+                themeText.innerText = 'Light';
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-year').value = 'All';
+            document.getElementById('filter-region').value = 'All';
+            document.getElementById('filter-category').value = 'All';
+            document.getElementById('filter-segment').value = 'All';
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const yearVal = document.getElementById('filter-year').value;
+            const regionVal = document.getElementById('filter-region').value;
+            const categoryVal = document.getElementById('filter-category').value;
+            const segmentVal = document.getElementById('filter-segment').value;
+
+            // Filter data
+            let filtered = salesData.filter(d => {
+                const dateObj = new Date(d['Order Date']);
+                const yr = dateObj.getFullYear().toString();
+                
+                const matchesYear = (yearVal === 'All' || yr === yearVal);
+                const matchesRegion = (regionVal === 'All' || d['Region'] === regionVal);
+                const matchesCategory = (categoryVal === 'All' || d['Category'] === categoryVal);
+                const matchesSegment = (segmentVal === 'All' || d['Customer Segment'] === segmentVal);
+
+                return matchesYear && matchesRegion && matchesCategory && matchesSegment;
+            });
+
+            // Update KPIs
+            updateKPIs(filtered);
+
+            // Update Charts
+            updateTrendChart(filtered);
+            updateRegionChart(filtered);
+            updateCategoryChart(filtered);
+            updateProductsChart(filtered);
+
+            // Update Sub-category Table
+            updateSubcategoryTable(filtered);
+        }
+
+        function updateKPIs(data) {
+            let totalSales = 0;
+            let totalProfit = 0;
+            let totalOrders = 0;
+            const uniqueOrders = new Set();
+
+            data.forEach(d => {
+                totalSales += d['Sales Revenue'];
+                totalProfit += d['Profit'];
+                uniqueOrders.add(d['Order ID']);
+            });
+
+            totalOrders = uniqueOrders.size;
+            const profitMargin = totalSales > 0 ? (totalProfit / totalSales) * 100 : 0;
+            const aov = totalOrders > 0 ? totalSales / totalOrders : 0;
+
+            document.getElementById('kpi-sales').innerText = `₹${totalSales.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('kpi-profit').innerText = `₹${totalProfit.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('kpi-margin').innerText = `${profitMargin.toFixed(2)}%`;
+            document.getElementById('kpi-orders').innerText = totalOrders.toLocaleString('en-IN');
+            document.getElementById('kpi-aov').innerText = `AOV: ₹${aov.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+            // Change trend colors if profit margin is low
+            const marginTrendSpan = document.querySelector('.kpi-card.margin .kpi-trend');
+            if (profitMargin < 10) {
+                marginTrendSpan.className = 'kpi-trend trend-down';
+                marginTrendSpan.innerHTML = '<span>Low Profitability</span>';
+            } else {
+                marginTrendSpan.className = 'kpi-trend trend-up';
+                marginTrendSpan.innerHTML = '<span>Good Profitability</span>';
+            }
+        }
+
+        function updateTrendChart(data) {
+            const trendsMap = {};
+            data.forEach(d => {
+                const dateObj = new Date(d['Order Date']);
+                const yMonth = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+                if (!trendsMap[yMonth]) {
+                    trendsMap[yMonth] = { sales: 0, profit: 0 };
+                }
+                trendsMap[yMonth].sales += d['Sales Revenue'];
+                trendsMap[yMonth].profit += d['Profit'];
+            });
+
+            const sortedMonths = Object.keys(trendsMap).sort();
+            const salesDataArr = sortedMonths.map(m => trendsMap[m].sales);
+            const profitDataArr = sortedMonths.map(m => trendsMap[m].profit);
+
+            const ctx = document.getElementById('chart-trends').getContext('2d');
+            const colors = getThemeColors();
+            
+            if (trendChartObj) {
+                trendChartObj.destroy();
+            }
+
+            trendChartObj = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sortedMonths,
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: salesDataArr,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Profit',
+                            data: profitDataArr,
+                            borderColor: '#10b981',
+                            backgroundColor: 'transparent',
+                            fill: false,
+                            tension: 0.3,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: colors.text, font: { family: 'Outfit' } } },
+                        tooltip: {
+                            backgroundColor: colors.tooltipBg,
+                            borderColor: colors.tooltipBorder,
+                            borderWidth: 1,
+                            titleFont: { family: 'Outfit' },
+                            bodyFont: { family: 'Outfit' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: colors.grid },
+                            ticks: { color: colors.text, font: { family: 'Outfit' } }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            grid: { color: colors.grid },
+                            ticks: { color: colors.text, font: { family: 'Outfit' } }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: colors.text, font: { family: 'Outfit' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateRegionChart(data) {
+            const regionMap = { East: 0, West: 0, Central: 0, South: 0 };
+            data.forEach(d => {
+                if (regionMap[d['Region']] !== undefined) {
+                    regionMap[d['Region']] += d['Sales Revenue'];
+                }
+            });
+
+            const labels = Object.keys(regionMap);
+            const values = Object.values(regionMap);
+
+            const ctx = document.getElementById('chart-region').getContext('2d');
+            const colors = getThemeColors();
+
+            if (regionChartObj) {
+                regionChartObj.destroy();
+            }
+
+            regionChartObj = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b'],
+                        borderColor: document.documentElement.getAttribute('data-theme') === 'light' ? '#ffffff' : '#111827',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: colors.text, font: { family: 'Outfit' } }
+                        },
+                        tooltip: {
+                            backgroundColor: colors.tooltipBg,
+                            borderColor: colors.tooltipBorder,
+                            borderWidth: 1,
+                            titleFont: { family: 'Outfit' },
+                            bodyFont: { family: 'Outfit' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCategoryChart(data) {
+            const catMap = {};
+            data.forEach(d => {
+                if (!catMap[d['Category']]) {
+                    catMap[d['Category']] = { sales: 0, profit: 0 };
+                }
+                catMap[d['Category']].sales += d['Sales Revenue'];
+                catMap[d['Category']].profit += d['Profit'];
+            });
+
+            const labels = Object.keys(catMap);
+            const salesValues = labels.map(c => catMap[c].sales);
+            const profitValues = labels.map(c => catMap[c].profit);
+
+            const ctx = document.getElementById('chart-category').getContext('2d');
+            const colors = getThemeColors();
+
+            if (categoryChartObj) {
+                categoryChartObj.destroy();
+            }
+
+            categoryChartObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: salesValues,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Profit',
+                            data: profitValues,
+                            backgroundColor: '#10b981',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: colors.text, font: { family: 'Outfit' } } },
+                        tooltip: {
+                            backgroundColor: colors.tooltipBg,
+                            borderColor: colors.tooltipBorder,
+                            borderWidth: 1,
+                            titleFont: { family: 'Outfit' },
+                            bodyFont: { family: 'Outfit' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: colors.grid },
+                            ticks: { color: colors.text, font: { family: 'Outfit' } }
+                        },
+                        y: {
+                            grid: { color: colors.grid },
+                            ticks: { color: colors.text, font: { family: 'Outfit' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateProductsChart(data) {
+            const prodMap = {};
+            data.forEach(d => {
+                if (!prodMap[d['Product Name']]) {
+                    prodMap[d['Product Name']] = 0;
+                }
+                prodMap[d['Product Name']] += d['Sales Revenue'];
+            });
+
+            const sortedProducts = Object.keys(prodMap)
+                .map(name => ({ name: name, sales: prodMap[name] }))
+                .sort((a, b) => b.sales - a.sales)
+                .slice(0, 10);
+
+            const labels = sortedProducts.map(p => p.name.length > 25 ? p.name.slice(0, 25) + '...' : p.name);
+            const values = sortedProducts.map(p => p.sales);
+
+            const ctx = document.getElementById('chart-products').getContext('2d');
+            const colors = getThemeColors();
+
+            if (productsChartObj) {
+                productsChartObj.destroy();
+            }
+
+            productsChartObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Sales Revenue',
+                        data: values,
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: colors.tooltipBg,
+                            borderColor: colors.tooltipBorder,
+                            borderWidth: 1,
+                            titleFont: { family: 'Outfit' },
+                            bodyFont: { family: 'Outfit' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: colors.grid },
+                            ticks: { color: colors.text, font: { family: 'Outfit' } }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: colors.text, font: { family: 'Outfit' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Subcategory Table Logics
+        function updateSubcategoryTable(data) {
+            const subcatMap = {};
+            data.forEach(d => {
+                const cat = d['Category'];
+                const subcat = d['Sub-Category'];
+                const key = `${cat}||${subcat}`;
+                if (!subcatMap[key]) {
+                    subcatMap[key] = {
+                        category: cat,
+                        subcategory: subcat,
+                        sales: 0,
+                        quantity: 0,
+                        profit: 0
+                    };
+                }
+                subcatMap[key].sales += d['Sales Revenue'];
+                subcatMap[key].quantity += d['Quantity Sold'];
+                subcatMap[key].profit += d['Profit'];
+            });
+
+            const subcatArray = Object.values(subcatMap);
+            
+            // Sort by sales descending initially
+            subcatArray.sort((a, b) => b.sales - a.sales);
+            window.currentTableData = subcatArray;
+            
+            // Clear current sort visual states
+            currentSortCol = -1;
+            currentSortDir = 'desc';
+            const headers = document.querySelectorAll('#subcategory-table th');
+            headers.forEach(th => {
+                th.classList.remove('sorted');
+                const icon = th.querySelector('.sort-icon');
+                if (icon) icon.innerText = '↕';
+            });
+
+            filterTable();
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('subcategory-table-body');
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No records match the current filter and search query.</td></tr>`;
+                return;
+            }
+
+            data.forEach(row => {
+                const margin = row.sales > 0 ? (row.profit / row.sales) * 100 : 0;
+                const marginClass = margin < 10 ? 'trend-down' : 'trend-up';
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.category}</td>
+                    <td><span class="subcat-badge">${row.subcategory}</span></td>
+                    <td class="text-right">₹${row.sales.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td class="text-right">${row.quantity.toLocaleString('en-IN')}</td>
+                    <td class="text-right ${row.profit >= 0 ? 'trend-up' : 'trend-down'}">₹${row.profit.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td class="text-right ${marginClass}">${margin.toFixed(2)}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function sortTable(colIndex) {
+            if (!window.currentTableData || window.currentTableData.length === 0) return;
+            
+            // Toggle direction if clicking same column
+            if (currentSortCol === colIndex) {
+                currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortCol = colIndex;
+                currentSortDir = 'desc';
+            }
+
+            // Update sort indicators
+            const headers = document.querySelectorAll('#subcategory-table th');
+            headers.forEach((th, idx) => {
+                const icon = th.querySelector('.sort-icon');
+                if (idx === colIndex) {
+                    icon.innerText = currentSortDir === 'asc' ? '▲' : '▼';
+                    th.classList.add('sorted');
+                } else {
+                    icon.innerText = '↕';
+                    th.classList.remove('sorted');
+                }
+            });
+
+            window.currentTableData.sort((a, b) => {
+                let valA, valB;
+                const marginA = a.sales > 0 ? (a.profit / a.sales) * 100 : 0;
+                const marginB = b.sales > 0 ? (b.profit / b.sales) * 100 : 0;
+
+                switch(colIndex) {
+                    case 0: valA = a.category.toLowerCase(); valB = b.category.toLowerCase(); break;
+                    case 1: valA = a.subcategory.toLowerCase(); valB = b.subcategory.toLowerCase(); break;
+                    case 2: valA = a.sales; valB = b.sales; break;
+                    case 3: valA = a.quantity; valB = b.quantity; break;
+                    case 4: valA = a.profit; valB = b.profit; break;
+                    case 5: valA = marginA; valB = marginB; break;
+                    default: return 0;
+                }
+
+                if (typeof valA === 'string') {
+                    return currentSortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                } else {
+                    return currentSortDir === 'asc' ? valA - valB : valB - valA;
+                }
+            });
+
+            filterTable();
+        }
+
+        function filterTable() {
+            const query = document.getElementById('table-search').value.toLowerCase().trim();
+            if (!window.currentTableData) return;
+
+            const filtered = window.currentTableData.filter(row => {
+                return row.category.toLowerCase().includes(query) || 
+                       row.subcategory.toLowerCase().includes(query);
+            });
+
+            renderTable(filtered);
+        }
+    </script>
+</body>
+</html>
